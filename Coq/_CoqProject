@@ -10,6 +10,7 @@ FreeMonoid/Category.v
 FreeMonoid/ExtraLemmas.v
 FreeMonoid/GroupExampleQ1a.v
 FreeMonoid/GroupNonExampleQ1b.v
+FreeMonoid/GroupExampleQ1c.v
 FreeMonoid/GroupHom.v
 FreeMonoid/HomExampleBoolOrToNatMax1.v
 FreeMonoid/MonoidExampleAddAbsorbing.v
