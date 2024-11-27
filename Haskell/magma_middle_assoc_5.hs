@@ -1,0 +1,222 @@
+#!/usr/bin/env stack
+-- stack --resolver lts-20.5 ghci --package QuickCheck
+import Test.QuickCheck
+import Data.List (nub)
+import Control.Monad
+
+-- Define data types for both magmas
+data M1 = A | B | C | D deriving (Eq, Show, Enum, Bounded)
+data M2 = P | Q | R | S deriving (Eq, Show, Enum, Bounded)
+data MM3 = W | X | Y | Z deriving (Eq, Show, Enum, Bounded)
+type M3 = [MM3]
+
+-- First magma operation (non-associative)
+magmaOp1 :: M1 -> M1 -> M1
+magmaOp1 A A = B
+magmaOp1 A B = A
+magmaOp1 A C = C
+magmaOp1 A D = D
+magmaOp1 B A = A
+magmaOp1 B B = C
+magmaOp1 B C = D
+magmaOp1 B D = B
+magmaOp1 C A = C
+magmaOp1 C B = D
+magmaOp1 C C = B
+magmaOp1 C D = A
+magmaOp1 D A = D
+magmaOp1 D B = C
+magmaOp1 D C = A
+magmaOp1 D D = B
+
+-- Second magma operation (associative - Klein four-group)
+magmaOp2 :: M2 -> M2 -> M2
+magmaOp2 P P = P
+magmaOp2 P Q = Q
+magmaOp2 P R = R
+magmaOp2 P S = S
+magmaOp2 Q P = Q
+magmaOp2 Q Q = P
+magmaOp2 Q R = S
+magmaOp2 Q S = R
+magmaOp2 R P = R
+magmaOp2 R Q = S
+magmaOp2 R R = P
+magmaOp2 R S = Q
+magmaOp2 S P = S
+magmaOp2 S Q = R
+magmaOp2 S R = Q
+magmaOp2 S S = P
+
+-- -- Third magma operation (associative - Klein four-group)
+-- magmaOp3 :: M3 -> M3 -> M3
+-- magmaOp3 W W = W
+-- magmaOp3 W X = X
+-- magmaOp3 W Y = Y
+-- magmaOp3 W Z = Z
+-- magmaOp3 X W = X
+-- magmaOp3 X X = Y
+-- magmaOp3 X Y = Z
+-- magmaOp3 X Z = W
+-- magmaOp3 Y W = Y
+-- magmaOp3 Y X = Z
+-- magmaOp3 Y Y = W
+-- magmaOp3 Y Z = X
+-- magmaOp3 Z W = Z
+-- magmaOp3 Z X = W
+-- magmaOp3 Z Y = X
+-- magmaOp3 Z Z = Y
+
+-- Generic functions that work with either magma
+class (Eq a, Show a) => MagmaElement a where
+    carrier :: [a]
+    op :: a -> a -> a
+
+instance MagmaElement M1 where
+    carrier = [A .. D]
+    op = magmaOp1
+
+instance MagmaElement M2 where
+    carrier = [P .. S]
+    op = magmaOp2
+
+instance MagmaElement M3 where
+    carrier = map (:[]) [W .. Z]
+    op = (++)
+
+-- Check if middle associativity holds for a specific middle element
+isMiddleAssoc :: MagmaElement a => a -> Bool
+isMiddleAssoc m = and [op (op a m) b == op a (op m b) | 
+                      a <- carrier, b <- carrier]
+
+-- Helper function for folding with the magma operation
+foldMagma :: MagmaElement a => a -> [a] -> a
+foldMagma = foldl op
+
+-- Check if fold-left-combine middle associativity holds
+isFoldLeftCombineMiddleAssoc :: MagmaElement a => a -> Bool
+isFoldLeftCombineMiddleAssoc m = and [
+    let result1 = foldMagma x xs
+        result2 = foldMagma y ys
+        combined1 = op result1 result2
+        combined2 = foldMagma x (xs ++ [m] ++ ys)
+    in combined1 == combined2 |
+    x <- carrier,
+    y <- carrier,
+    xs <- concat [sequence (replicate i carrier) | i <- [0..4]],
+    ys <- concat [sequence (replicate i carrier) | i <- [0..4]]
+    ]
+
+-- Check if fold-left-combine middle associativity holds
+isFoldLeftCombineMiddleAssoc' = [
+    (x, xs, y, ys, result1, result2, combined1, combined2, combined1 == combined2) |
+    x <- carrier :: [M2],
+    y <- carrier,
+    xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    ys <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    let result1 = foldMagma x xs,
+    let result2 = foldMagma y ys,
+    let combined1 = op result1 result2,
+    let combined2 = foldMagma x (xs ++ [y] ++ ys),
+    combined1 /= combined2
+    ]
+
+-- Check if an element is a generator
+isGeneratorM1 :: M1 -> Bool
+isGeneratorM1 m = length (generateElements m) == length (carrier :: [M1])
+  where
+    generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
+    genStep elems = [op a b | a <- elems, b <- carrier]
+
+isGeneratorM2 :: M2 -> Bool
+isGeneratorM2 m = length (generateElements m) == length (carrier :: [M2])
+  where
+    generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
+    genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
+
+isGeneratorM3 :: M3 -> Bool
+isGeneratorM3 m = length (generateElements m) == length (carrier :: [M3])
+  where
+    generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
+    genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
+
+-- Properties for both magmas
+class (MagmaElement a, Arbitrary a) => TestMagma a where
+    testMagma :: String -> a -> IO ()
+
+instance TestMagma M1 where
+    testMagma name _ = testMagmaGenericM1 name (carrier :: [M1])
+
+instance TestMagma M2 where
+    testMagma name _ = testMagmaGenericM2 name (carrier :: [M2])
+
+instance TestMagma M3 where
+    testMagma name _ = testMagmaGenericM3 name (carrier :: [M3])
+
+testMagmaGenericM1 :: String -> [M1] -> IO ()
+testMagmaGenericM1 name elems = do
+    putStrLn $ "\nTesting " ++ name ++ ":"
+    putStrLn "Testing which elements are generators:"
+    mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
+           (if isGeneratorM1 m then "" else "not ") ++ "a generator") elems
+    
+    putStrLn "\nTesting which elements satisfy middle associativity:"
+    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
+           (if isMiddleAssoc m then "" else "not ") ++ 
+           "satisfy middle associativity") elems
+    
+    putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
+    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
+           (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
+           "satisfy fold-left-combine middle associativity") elems
+
+testMagmaGenericM2 :: String -> [M2] -> IO ()
+testMagmaGenericM2 name elems = do
+    putStrLn $ "\nTesting " ++ name ++ ":"
+    putStrLn "Testing which elements are generators:"
+    mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
+           (if isGeneratorM2 m then "" else "not ") ++ "a generator") elems
+    
+    putStrLn "\nTesting which elements satisfy middle associativity:"
+    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
+           (if isMiddleAssoc m then "" else "not ") ++ 
+           "satisfy middle associativity") elems
+    
+    putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
+    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
+           (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
+           "satisfy fold-left-combine middle associativity") elems
+
+testMagmaGenericM3 :: String -> [M3] -> IO ()
+testMagmaGenericM3 name elems = do
+    putStrLn $ "\nTesting " ++ name ++ ":"
+    putStrLn "Testing which elements are generators:"
+    mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
+           (if isGeneratorM3 m then "" else "not ") ++ "a generator") elems
+    
+    putStrLn "\nTesting which elements satisfy middle associativity:"
+    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
+           (if isMiddleAssoc m then "" else "not ") ++ 
+           "satisfy middle associativity") elems
+    
+    putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
+    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
+           (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
+           "satisfy fold-left-combine middle associativity") elems
+
+-- Arbitrary instances
+instance Arbitrary M1 where
+    arbitrary = elements carrier
+
+instance Arbitrary M2 where
+    arbitrary = elements carrier
+
+instance Arbitrary MM3 where
+    arbitrary = elements [W,X,Y,Z]
+
+-- Main function to test both magmas
+main :: IO ()
+main = do
+    testMagma "First Magma (Non-associative)" (undefined :: M1)
+    testMagma "Second Magma (Klein four-group)" (undefined :: M2)
+    testMagma "Third Magma" (undefined :: M3)
