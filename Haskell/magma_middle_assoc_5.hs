@@ -1,5 +1,6 @@
 #!/usr/bin/env stack
 -- stack --resolver lts-20.5 ghci --package QuickCheck
+
 import Test.QuickCheck
 import Data.List (nub)
 import Control.Monad
@@ -7,8 +8,8 @@ import Control.Monad
 -- Define data types for both magmas
 data M1 = A | B | C | D deriving (Eq, Show, Enum, Bounded)
 data M2 = P | Q | R | S deriving (Eq, Show, Enum, Bounded)
-data MM3 = W | X | Y | Z deriving (Eq, Show, Enum, Bounded)
-type M3 = [MM3]
+data M3 = W | X | Y | Z deriving (Eq, Show, Enum, Bounded)
+newtype M4 = M4 {fromM4 :: [M3]} deriving (Eq, Show)
 
 -- First magma operation (non-associative)
 magmaOp1 :: M1 -> M1 -> M1
@@ -48,24 +49,28 @@ magmaOp2 S Q = R
 magmaOp2 S R = Q
 magmaOp2 S S = P
 
--- -- Third magma operation (associative - Klein four-group)
--- magmaOp3 :: M3 -> M3 -> M3
--- magmaOp3 W W = W
--- magmaOp3 W X = X
--- magmaOp3 W Y = Y
--- magmaOp3 W Z = Z
--- magmaOp3 X W = X
--- magmaOp3 X X = Y
--- magmaOp3 X Y = Z
--- magmaOp3 X Z = W
--- magmaOp3 Y W = Y
--- magmaOp3 Y X = Z
--- magmaOp3 Y Y = W
--- magmaOp3 Y Z = X
--- magmaOp3 Z W = Z
--- magmaOp3 Z X = W
--- magmaOp3 Z Y = X
--- magmaOp3 Z Z = Y
+-- Third magma operation (associative - Klein four-group)
+magmaOp3 :: M3 -> M3 -> M3
+magmaOp3 W W = W
+magmaOp3 W X = X
+magmaOp3 W Y = Y
+magmaOp3 W Z = Z
+magmaOp3 X W = X
+magmaOp3 X X = Y
+magmaOp3 X Y = Z
+magmaOp3 X Z = W
+magmaOp3 Y W = Y
+magmaOp3 Y X = Z
+magmaOp3 Y Y = W
+magmaOp3 Y Z = X
+magmaOp3 Z W = Z
+magmaOp3 Z X = W
+magmaOp3 Z Y = X
+magmaOp3 Z Z = Y
+
+-- Third magma operation (associative - Klein four-group)
+magmaOp4 :: M4 -> M4 -> M4
+magmaOp4 (M4 x) (M4 y) = M4 (x ++ y) 
 
 -- Generic functions that work with either magma
 class (Eq a, Show a) => MagmaElement a where
@@ -81,8 +86,12 @@ instance MagmaElement M2 where
     op = magmaOp2
 
 instance MagmaElement M3 where
-    carrier = map (:[]) [W .. Z]
-    op = (++)
+    carrier = [W .. Z]
+    op = magmaOp3
+
+instance MagmaElement (M4) where
+    carrier = map (M4 . (:[])) [W .. Z]
+    op = magmaOp4
 
 -- Check if middle associativity holds for a specific middle element
 isMiddleAssoc :: MagmaElement a => a -> Bool
@@ -140,6 +149,12 @@ isGeneratorM3 m = length (generateElements m) == length (carrier :: [M3])
     generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
     genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
 
+isGeneratorM4 :: M4 -> Bool
+isGeneratorM4 m = length (generateElements m) == length (carrier :: [M4])
+  where
+    generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
+    genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
+
 -- Properties for both magmas
 class (MagmaElement a, Arbitrary a) => TestMagma a where
     testMagma :: String -> a -> IO ()
@@ -152,6 +167,9 @@ instance TestMagma M2 where
 
 instance TestMagma M3 where
     testMagma name _ = testMagmaGenericM3 name (carrier :: [M3])
+
+instance TestMagma M4 where
+    testMagma name _ = testMagmaGenericM4 name (carrier :: [M4])
 
 testMagmaGenericM1 :: String -> [M1] -> IO ()
 testMagmaGenericM1 name elems = do
@@ -204,6 +222,23 @@ testMagmaGenericM3 name elems = do
            (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
            "satisfy fold-left-combine middle associativity") elems
 
+testMagmaGenericM4 :: String -> [M4] -> IO ()
+testMagmaGenericM4 name elems = do
+    putStrLn $ "\nTesting " ++ name ++ ":"
+    putStrLn "Testing which elements are generators:"
+    mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
+           (if isGeneratorM4 m then "" else "not ") ++ "a generator") elems
+    
+    putStrLn "\nTesting which elements satisfy middle associativity:"
+    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
+           (if isMiddleAssoc m then "" else "not ") ++ 
+           "satisfy middle associativity") elems
+    
+    putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
+    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
+           (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
+           "satisfy fold-left-combine middle associativity") elems
+
 -- Arbitrary instances
 instance Arbitrary M1 where
     arbitrary = elements carrier
@@ -211,8 +246,11 @@ instance Arbitrary M1 where
 instance Arbitrary M2 where
     arbitrary = elements carrier
 
-instance Arbitrary MM3 where
-    arbitrary = elements [W,X,Y,Z]
+instance Arbitrary M3 where
+    arbitrary = elements carrier
+
+instance Arbitrary M4 where
+    arbitrary = elements carrier
 
 -- Main function to test both magmas
 main :: IO ()
@@ -220,3 +258,4 @@ main = do
     testMagma "First Magma (Non-associative)" (undefined :: M1)
     testMagma "Second Magma (Klein four-group)" (undefined :: M2)
     testMagma "Third Magma" (undefined :: M3)
+    testMagma "Free Monoid" (undefined :: M4)
