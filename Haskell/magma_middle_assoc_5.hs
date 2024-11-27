@@ -117,8 +117,22 @@ isFoldLeftCombineMiddleAssoc m = and [
     ]
 
 -- Check if fold-left-combine middle associativity holds
-isFoldLeftCombineMiddleAssoc' = [
-    (x, xs, y, ys, result1, result2, combined1, combined2, combined1 == combined2) |
+isFoldLeftCombineMiddleAssocM1 = and [
+    (combined1 == combined2) |
+    x <- carrier :: [M1],
+    y <- carrier,
+    xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    ys <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    let result1 = foldMagma x xs,
+    let result2 = foldMagma y ys,
+    let combined1 = op result1 result2,
+    let combined2 = foldMagma x (xs ++ [y] ++ ys),
+    combined1 /= combined2
+    ]
+
+-- Check if fold-left-combine middle associativity holds
+isFoldLeftCombineMiddleAssocM2 = and [
+    (combined1 == combined2) |
     x <- carrier :: [M2],
     y <- carrier,
     xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
@@ -130,27 +144,60 @@ isFoldLeftCombineMiddleAssoc' = [
     combined1 /= combined2
     ]
 
+-- Check if fold-left-combine middle associativity holds
+isFoldLeftCombineMiddleAssocM3 = and [
+    (combined1 == combined2) |
+    x <- carrier :: [M3],
+    y <- carrier,
+    xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    ys <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    let result1 = foldMagma x xs,
+    let result2 = foldMagma y ys,
+    let combined1 = op result1 result2,
+    let combined2 = foldMagma x (xs ++ [y] ++ ys),
+    combined1 /= combined2
+    ]
+
+-- Check if fold-left-combine middle associativity holds
+isFoldLeftCombineMiddleAssocM4 = and [
+    (combined1 == combined2) |
+    x <- carrier :: [M4],
+    y <- carrier,
+    xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    ys <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    let result1 = foldMagma x xs,
+    let result2 = foldMagma y ys,
+    let combined1 = op result1 result2,
+    let combined2 = foldMagma x (xs ++ [y] ++ ys),
+    combined1 /= combined2
+    ]
+
 -- Check if an element is a generator
-isGeneratorM1 :: M1 -> Bool
-isGeneratorM1 m = length (generateElements m) == length (carrier :: [M1])
+--
+-- NOTE:
+-- 	I previosuly wasn't considering the possible generating sets but instead only declaring an element
+--	as a generator when it was a generator in a generating set by itself.
+--
+isGeneratorByItselfM1 :: M1 -> Bool
+isGeneratorByItselfM1 m = length (generateElements m) == length (carrier :: [M1])
   where
     generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
     genStep elems = [op a b | a <- elems, b <- carrier]
 
-isGeneratorM2 :: M2 -> Bool
-isGeneratorM2 m = length (generateElements m) == length (carrier :: [M2])
+isGeneratorByItselfM2 :: M2 -> Bool
+isGeneratorByItselfM2 m = length (generateElements m) == length (carrier :: [M2])
   where
     generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
     genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
 
-isGeneratorM3 :: M3 -> Bool
-isGeneratorM3 m = length (generateElements m) == length (carrier :: [M3])
+isGeneratorByItselfM3 :: M3 -> Bool
+isGeneratorByItselfM3 m = length (generateElements m) == length (carrier :: [M3])
   where
     generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
     genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
 
-isGeneratorM4 :: M4 -> Bool
-isGeneratorM4 m = length (generateElements m) == length (carrier :: [M4])
+isGeneratorByItselfM4 :: M4 -> Bool
+isGeneratorByItselfM4 m = length (generateElements m) == length (carrier :: [M4])
   where
     generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
     genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
@@ -174,9 +221,9 @@ instance TestMagma M4 where
 testMagmaGenericM1 :: String -> [M1] -> IO ()
 testMagmaGenericM1 name elems = do
     putStrLn $ "\nTesting " ++ name ++ ":"
-    putStrLn "Testing which elements are generators:"
+    putStrLn "Testing which elements are generators by themselves:"
     mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorM1 m then "" else "not ") ++ "a generator") elems
+           (if isGeneratorByItselfM1 m then "" else "not ") ++ "a generator by itself") elems
     
     putStrLn "\nTesting which elements satisfy middle associativity:"
     mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
@@ -184,16 +231,14 @@ testMagmaGenericM1 name elems = do
            "satisfy middle associativity") elems
     
     putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
-    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
-           (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
-           "satisfy fold-left-combine middle associativity") elems
+    putStrLn $ "Does " ++ (if isFoldLeftCombineMiddleAssocM1 then "" else "not ") ++ "satisfy fold-left-combine middle associativity"
 
 testMagmaGenericM2 :: String -> [M2] -> IO ()
 testMagmaGenericM2 name elems = do
     putStrLn $ "\nTesting " ++ name ++ ":"
     putStrLn "Testing which elements are generators:"
     mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorM2 m then "" else "not ") ++ "a generator") elems
+           (if isGeneratorByItselfM2 m then "" else "not ") ++ "a generator by itself") elems
     
     putStrLn "\nTesting which elements satisfy middle associativity:"
     mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
@@ -201,16 +246,14 @@ testMagmaGenericM2 name elems = do
            "satisfy middle associativity") elems
     
     putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
-    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
-           (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
-           "satisfy fold-left-combine middle associativity") elems
+    putStrLn $ "Does " ++ (if isFoldLeftCombineMiddleAssocM2 then "" else "not ") ++ "satisfy fold-left-combine middle associativity"
 
 testMagmaGenericM3 :: String -> [M3] -> IO ()
 testMagmaGenericM3 name elems = do
     putStrLn $ "\nTesting " ++ name ++ ":"
     putStrLn "Testing which elements are generators:"
     mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorM3 m then "" else "not ") ++ "a generator") elems
+           (if isGeneratorByItselfM3 m then "" else "not ") ++ "a generator by itself") elems
     
     putStrLn "\nTesting which elements satisfy middle associativity:"
     mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
@@ -218,16 +261,14 @@ testMagmaGenericM3 name elems = do
            "satisfy middle associativity") elems
     
     putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
-    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
-           (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
-           "satisfy fold-left-combine middle associativity") elems
+    putStrLn $ "Does " ++ (if isFoldLeftCombineMiddleAssocM3 then "" else "not ") ++ "satisfy fold-left-combine middle associativity"
 
 testMagmaGenericM4 :: String -> [M4] -> IO ()
 testMagmaGenericM4 name elems = do
     putStrLn $ "\nTesting " ++ name ++ ":"
     putStrLn "Testing which elements are generators:"
     mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorM4 m then "" else "not ") ++ "a generator") elems
+           (if isGeneratorByItselfM4 m then "" else "not ") ++ "a generator by itself") elems
     
     putStrLn "\nTesting which elements satisfy middle associativity:"
     mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
@@ -235,9 +276,7 @@ testMagmaGenericM4 name elems = do
            "satisfy middle associativity") elems
     
     putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
-    mapM_ (\m -> putStrLn $ show m ++ " does " ++ 
-           (if isFoldLeftCombineMiddleAssoc m then "" else "not ") ++ 
-           "satisfy fold-left-combine middle associativity") elems
+    putStrLn $ "Does " ++ (if isFoldLeftCombineMiddleAssocM4 then "" else "not ") ++ "satisfy fold-left-combine middle associativity"
 
 -- Arbitrary instances
 instance Arbitrary M1 where
