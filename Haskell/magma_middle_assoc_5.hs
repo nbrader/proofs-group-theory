@@ -103,20 +103,6 @@ foldMagma :: MagmaElement a => a -> [a] -> a
 foldMagma = foldl op
 
 -- Check if fold-left-combine middle associativity holds
-isFoldLeftCombineMiddleAssoc :: MagmaElement a => a -> Bool
-isFoldLeftCombineMiddleAssoc m = and [
-    let result1 = foldMagma x xs
-        result2 = foldMagma y ys
-        combined1 = op result1 result2
-        combined2 = foldMagma x (xs ++ [m] ++ ys)
-    in combined1 == combined2 |
-    x <- carrier,
-    y <- carrier,
-    xs <- concat [sequence (replicate i carrier) | i <- [0..4]],
-    ys <- concat [sequence (replicate i carrier) | i <- [0..4]]
-    ]
-
--- Check if fold-left-combine middle associativity holds
 isFoldLeftCombineMiddleAssocM1 = and [
     (combined1 == combined2) |
     x <- carrier :: [M1],
