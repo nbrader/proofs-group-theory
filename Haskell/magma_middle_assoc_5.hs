@@ -158,22 +158,6 @@ isGeneratorByItself m = length (generateElements m) == length (specificCarrier m
     generateElements x = nub $ concat $ take (length (specificCarrier x)) $ iterate genStep [x]
     genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
 
--- Properties for both magmas
-class (MagmaElement a, Arbitrary a) => TestMagma a where
-    testMagma :: String -> a -> IO ()
-
-instance TestMagma M1 where
-    testMagma name _ = testMagmaGeneric name (carrier :: [M1])
-
-instance TestMagma M2 where
-    testMagma name _ = testMagmaGeneric name (carrier :: [M2])
-
-instance TestMagma M3 where
-    testMagma name _ = testMagmaGeneric name (carrier :: [M3])
-
-instance TestMagma M4 where
-    testMagma name _ = testMagmaGeneric name (carrier :: [M4])
-
 -- Generalized testing function
 testMagmaGeneric :: (MagmaElement a) => String -> [a] -> IO ()
 testMagmaGeneric name elems = do
