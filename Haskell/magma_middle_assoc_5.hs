@@ -11,6 +11,17 @@ data M2 = P | Q | R | S deriving (Eq, Show, Enum, Bounded)
 data M3 = W | X | Y | Z deriving (Eq, Show, Enum, Bounded)
 newtype M4 = M4 {fromM4 :: [M3]} deriving (Eq, Show)
 
+-- Define a data type for the different Magma options
+data MagmaType = FirstMagma | SecondMagma | ThirdMagma | FreeMonoid
+    deriving (Eq, Show, Enum, Bounded)
+
+-- Pretty names for each MagmaType
+prettyMagmaName :: MagmaType -> String
+prettyMagmaName FirstMagma  = "First Magma (Non-associative)"
+prettyMagmaName SecondMagma = "Second Magma (Klein four-group)"
+prettyMagmaName ThirdMagma  = "Third Magma"
+prettyMagmaName FreeMonoid  = "Free Monoid"
+
 -- First magma operation (non-associative)
 magmaOp1 :: M1 -> M1 -> M1
 magmaOp1 A A = B
@@ -184,6 +195,15 @@ testMagmaGeneric name elems = do
         "Free Monoid" -> isFoldLeftCombineMiddleAssocM4
         _ -> False) ++ "fold-left-combine middle associativity"
 
+
+-- Function to test a specific MagmaType
+testMagmaByType :: MagmaType -> IO ()
+testMagmaByType magmaType = case magmaType of
+    FirstMagma  -> testMagmaGeneric (prettyMagmaName FirstMagma) (carrier :: [M1])
+    SecondMagma -> testMagmaGeneric (prettyMagmaName SecondMagma) (carrier :: [M2])
+    ThirdMagma  -> testMagmaGeneric (prettyMagmaName ThirdMagma) (carrier :: [M3])
+    FreeMonoid  -> testMagmaGeneric (prettyMagmaName FreeMonoid) (carrier :: [M4])
+
 -- Arbitrary instances
 instance Arbitrary M1 where
     arbitrary = elements carrier
@@ -197,10 +217,6 @@ instance Arbitrary M3 where
 instance Arbitrary M4 where
     arbitrary = elements carrier
 
--- Main function to test both magmas
+-- Main function to iterate over all magma types
 main :: IO ()
-main = do
-    testMagma "First Magma (Non-associative)" (undefined :: M1)
-    testMagma "Second Magma (Klein four-group)" (undefined :: M2)
-    testMagma "Third Magma" (undefined :: M3)
-    testMagma "Free Monoid" (undefined :: M4)
+main = mapM_ testMagmaByType [minBound .. maxBound :: MagmaType]
