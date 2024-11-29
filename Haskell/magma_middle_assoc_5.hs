@@ -9,7 +9,11 @@ import Control.Monad
 data M1 = A | B | C | D deriving (Eq, Show, Enum, Bounded)
 data M2 = P | Q | R | S deriving (Eq, Show, Enum, Bounded)
 data M3 = W | X | Y | Z deriving (Eq, Show, Enum, Bounded)
-newtype M4 = M4 [M3] deriving (Eq, Show)
+
+-- I'm making this carrier type finite for testing purposes but it's a place-holder for
+-- an infinite type (otherwise M4 would not be closed as is required to be a magma.
+data C4 = I | J | K | L deriving (Eq, Show, Enum, Bounded) 
+newtype M4 = M4 [C4] deriving (Eq, Show)
 
 -- Define a data type for the different Magma options
 data MagmaType = FirstMagma | SecondMagma | ThirdMagma | FreeMonoid
@@ -20,7 +24,7 @@ prettyMagmaName :: MagmaType -> String
 prettyMagmaName FirstMagma  = "First Magma (Non-associative)"
 prettyMagmaName SecondMagma = "Second Magma (Klein four-group)"
 prettyMagmaName ThirdMagma  = "Third Magma"
-prettyMagmaName FreeMonoid  = "Free Monoid"
+prettyMagmaName FreeMonoid  = "Append Magma"
 
 -- First magma operation (non-associative)
 magmaOp1 :: M1 -> M1 -> M1
@@ -100,8 +104,8 @@ instance MagmaElement M3 where
     carrier = [W .. Z]
     op = magmaOp3
 
-instance MagmaElement (M4) where
-    carrier = map (M4 . (:[])) [W .. Z]
+instance MagmaElement M4 where
+    carrier = map (M4 . (:[])) [J .. L]
     op = magmaOp4
 
 -- Check if middle associativity holds for a specific middle element
