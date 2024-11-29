@@ -129,16 +129,13 @@ isFoldLeftCombineMiddleAssoc elems = and [
     ]
 
 -- Replace specific functions with instances of the generic function
-isFoldLeftCombineMiddleAssocM1 :: Bool
+isFoldLeftCombineMiddleAssocM1, isFoldLeftCombineMiddleAssocM2,
+                                isFoldLeftCombineMiddleAssocM3,
+                                isFoldLeftCombineMiddleAssocM4 :: Bool
+
 isFoldLeftCombineMiddleAssocM1 = isFoldLeftCombineMiddleAssoc (carrier :: [M1])
-
-isFoldLeftCombineMiddleAssocM2 :: Bool
 isFoldLeftCombineMiddleAssocM2 = isFoldLeftCombineMiddleAssoc (carrier :: [M2])
-
-isFoldLeftCombineMiddleAssocM3 :: Bool
 isFoldLeftCombineMiddleAssocM3 = isFoldLeftCombineMiddleAssoc (carrier :: [M3])
-
-isFoldLeftCombineMiddleAssocM4 :: Bool
 isFoldLeftCombineMiddleAssocM4 = isFoldLeftCombineMiddleAssoc (carrier :: [M4])
 
 -- Check if an element is a generator
@@ -181,26 +178,19 @@ testMagmaGeneric name elems = do
 
 
 -- Function to test a specific MagmaType
-testMagmaByType :: MagmaType -> IO ()
-testMagmaByType magmaType = case magmaType of
+testMagma :: MagmaType -> IO ()
+testMagma magmaType = case magmaType of
     FirstMagma  -> testMagmaGeneric (prettyMagmaName FirstMagma) (carrier :: [M1])
     SecondMagma -> testMagmaGeneric (prettyMagmaName SecondMagma) (carrier :: [M2])
     ThirdMagma  -> testMagmaGeneric (prettyMagmaName ThirdMagma) (carrier :: [M3])
     FreeMonoid  -> testMagmaGeneric (prettyMagmaName FreeMonoid) (carrier :: [M4])
 
 -- Arbitrary instances
-instance Arbitrary M1 where
-    arbitrary = elements carrier
-
-instance Arbitrary M2 where
-    arbitrary = elements carrier
-
-instance Arbitrary M3 where
-    arbitrary = elements carrier
-
-instance Arbitrary M4 where
-    arbitrary = elements carrier
+instance Arbitrary M1 where arbitrary = elements carrier
+instance Arbitrary M2 where arbitrary = elements carrier
+instance Arbitrary M3 where arbitrary = elements carrier
+instance Arbitrary M4 where arbitrary = elements carrier
 
 -- Main function to iterate over all magma types
 main :: IO ()
-main = mapM_ testMagmaByType [minBound .. maxBound :: MagmaType]
+main = mapM_ testMagma [minBound .. maxBound :: MagmaType]
