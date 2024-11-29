@@ -105,7 +105,7 @@ instance MagmaElement M3 where
     op = magmaOp3
 
 instance MagmaElement M4 where
-    carrier = map M4 $ [] : map (:[]) [J .. K]
+    carrier = map M4 $ [] : map (:[]) [I .. K]
     op = magmaOp4
 
 -- Check if middle associativity holds for a specific middle element
