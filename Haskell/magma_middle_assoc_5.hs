@@ -207,38 +207,27 @@ class (MagmaElement a, Arbitrary a) => TestMagma a where
     testMagma :: String -> a -> IO ()
 
 instance TestMagma M1 where
-    testMagma name _ = testMagmaGenericM1 name (carrier :: [M1])
+    testMagma name _ = testMagmaGeneric name (carrier :: [M1]) isGeneratorByItselfM1
 
 instance TestMagma M2 where
-    testMagma name _ = testMagmaGenericM2 name (carrier :: [M2])
+    testMagma name _ = testMagmaGeneric name (carrier :: [M2]) isGeneratorByItselfM2
 
 instance TestMagma M3 where
-    testMagma name _ = testMagmaGenericM3 name (carrier :: [M3])
+    testMagma name _ = testMagmaGeneric name (carrier :: [M3]) isGeneratorByItselfM3
 
 instance TestMagma M4 where
-    testMagma name _ = testMagmaGenericM4 name (carrier :: [M4])
+    testMagma name _ = testMagmaGeneric name (carrier :: [M4]) isGeneratorByItselfM4
 
-testMagmaGenericM1 :: String -> [M1] -> IO ()
-testMagmaGenericM1 name elems = do
-    putStrLn $ "\nTesting " ++ name ++ ":"
-    putStrLn "Testing which elements are generators by themselves:"
-    mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorByItselfM1 m then "" else "not ") ++ "a generator by itself") elems
-    
-    putStrLn "\nTesting which elements satisfy middle associativity:"
-    mapM_ (\m -> putStrLn $ show m ++
-           (if isMiddleAssoc m then " satisfies " else " does not satisfy ") ++ 
-           "middle associativity") elems
-    
-    putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
-    putStrLn $ (if isFoldLeftCombineMiddleAssocM1 then "Satisfies " else "Does not satisfy ") ++ "fold-left-combine middle associativity"
 
-testMagmaGenericM2 :: String -> [M2] -> IO ()
-testMagmaGenericM2 name elems = do
+
+
+-- Generalized testing function
+testMagmaGeneric :: (MagmaElement a) => String -> [a] -> (a -> Bool) -> IO ()
+testMagmaGeneric name elems isGeneratorFunc = do
     putStrLn $ "\nTesting " ++ name ++ ":"
     putStrLn "Testing which elements are generators:"
     mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorByItselfM2 m then "" else "not ") ++ "a generator by itself") elems
+           (if isGeneratorFunc m then "" else "not ") ++ "a generator by itself") elems
     
     putStrLn "\nTesting which elements satisfy middle associativity:"
     mapM_ (\m -> putStrLn $ show m ++
@@ -246,37 +235,12 @@ testMagmaGenericM2 name elems = do
            "middle associativity") elems
     
     putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
-    putStrLn $ (if isFoldLeftCombineMiddleAssocM2 then "Satisfies " else "Does not satisfy ") ++ "fold-left-combine middle associativity"
-
-testMagmaGenericM3 :: String -> [M3] -> IO ()
-testMagmaGenericM3 name elems = do
-    putStrLn $ "\nTesting " ++ name ++ ":"
-    putStrLn "Testing which elements are generators:"
-    mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorByItselfM3 m then "" else "not ") ++ "a generator by itself") elems
-    
-    putStrLn "\nTesting which elements satisfy middle associativity:"
-    mapM_ (\m -> putStrLn $ show m ++
-           (if isMiddleAssoc m then " satisfies " else " does not satisfy ") ++ 
-           "middle associativity") elems
-    
-    putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
-    putStrLn $ (if isFoldLeftCombineMiddleAssocM3 then "Satisfies " else "Does not satisfy ") ++ "fold-left-combine middle associativity"
-
-testMagmaGenericM4 :: String -> [M4] -> IO ()
-testMagmaGenericM4 name elems = do
-    putStrLn $ "\nTesting " ++ name ++ ":"
-    putStrLn "Testing which elements are generators:"
-    mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorByItselfM4 m then "" else "not ") ++ "a generator by itself") elems
-    
-    putStrLn "\nTesting which elements satisfy middle associativity:"
-    mapM_ (\m -> putStrLn $ show m ++
-           (if isMiddleAssoc m then " satisfies " else " does not satisfy ") ++ 
-           "middle associativity") elems
-    
-    putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
-    putStrLn $ (if isFoldLeftCombineMiddleAssocM4 then "Satisfies " else "Does not satisfy ") ++ "fold-left-combine middle associativity"
+    putStrLn $ (\b -> if b then "Satisfies " else "Does not satisfy ") (case name of
+        "First Magma (Non-associative)" -> isFoldLeftCombineMiddleAssocM1
+        "Second Magma (Klein four-group)" -> isFoldLeftCombineMiddleAssocM2
+        "Third Magma" -> isFoldLeftCombineMiddleAssocM3
+        "Free Monoid" -> isFoldLeftCombineMiddleAssocM4
+        _ -> False) ++ "fold-left-combine middle associativity"
 
 -- Arbitrary instances
 instance Arbitrary M1 where
