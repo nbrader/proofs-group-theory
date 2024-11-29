@@ -167,7 +167,7 @@ instance TestMagma M4 where
 testMagmaGeneric :: (MagmaElement a) => String -> [a] -> IO ()
 testMagmaGeneric name elems = do
     putStrLn $ "\nTesting " ++ name ++ ":"
-    putStrLn "Testing which elements are generators:"
+    putStrLn "Testing which elements are generators by themselves:"
     mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
            (if isGeneratorByItself m then "" else "not ") ++ "a generator by itself") elems
     
