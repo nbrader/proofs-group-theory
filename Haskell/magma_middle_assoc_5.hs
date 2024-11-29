@@ -176,7 +176,7 @@ testMagmaGeneric name elems = do
            (if isMiddleAssoc m then " satisfies " else " does not satisfy ") ++ 
            "middle associativity") elems
     
-    putStrLn "\nTesting which elements satisfy fold-left-combine middle associativity:"
+    putStrLn "\nTesting if elements satisfy fold-left-combine middle associativity:"
     putStrLn $ (\b -> if b then "Satisfies " else "Does not satisfy ") (case name of
         "First Magma (Non-associative)" -> isFoldLeftCombineMiddleAssocM1
         "Second Magma (Klein four-group)" -> isFoldLeftCombineMiddleAssocM2
