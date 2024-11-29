@@ -164,28 +164,15 @@ isFoldLeftCombineMiddleAssocM4 = and [
 -- 	I previosuly wasn't considering the possible generating sets but instead only declaring an element
 --	as a generator when it was a generator in a generating set by itself.
 --
-isGeneratorByItselfM1 :: M1 -> Bool
-isGeneratorByItselfM1 m = length (generateElements m) == length (carrier :: [M1])
-  where
-    generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
-    genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
 
-isGeneratorByItselfM2 :: M2 -> Bool
-isGeneratorByItselfM2 m = length (generateElements m) == length (carrier :: [M2])
+-- Generic generator function works for all magma types
+isGeneratorByItself :: (MagmaElement a) => a -> Bool
+isGeneratorByItself m = length (generateElements m) == length (specificCarrier m)
   where
-    generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
-    genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
+    specificCarrier :: MagmaElement a => a -> [a]
+    specificCarrier _ = carrier
 
-isGeneratorByItselfM3 :: M3 -> Bool
-isGeneratorByItselfM3 m = length (generateElements m) == length (carrier :: [M3])
-  where
-    generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
-    genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
-
-isGeneratorByItselfM4 :: M4 -> Bool
-isGeneratorByItselfM4 m = length (generateElements m) == length (carrier :: [M4])
-  where
-    generateElements x = nub $ concat $ take 4 $ iterate genStep [x]
+    generateElements x = nub $ concat $ take (length (specificCarrier x)) $ iterate genStep [x]
     genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
 
 -- Properties for both magmas
@@ -193,27 +180,24 @@ class (MagmaElement a, Arbitrary a) => TestMagma a where
     testMagma :: String -> a -> IO ()
 
 instance TestMagma M1 where
-    testMagma name _ = testMagmaGeneric name (carrier :: [M1]) isGeneratorByItselfM1
+    testMagma name _ = testMagmaGeneric name (carrier :: [M1])
 
 instance TestMagma M2 where
-    testMagma name _ = testMagmaGeneric name (carrier :: [M2]) isGeneratorByItselfM2
+    testMagma name _ = testMagmaGeneric name (carrier :: [M2])
 
 instance TestMagma M3 where
-    testMagma name _ = testMagmaGeneric name (carrier :: [M3]) isGeneratorByItselfM3
+    testMagma name _ = testMagmaGeneric name (carrier :: [M3])
 
 instance TestMagma M4 where
-    testMagma name _ = testMagmaGeneric name (carrier :: [M4]) isGeneratorByItselfM4
-
-
-
+    testMagma name _ = testMagmaGeneric name (carrier :: [M4])
 
 -- Generalized testing function
-testMagmaGeneric :: (MagmaElement a) => String -> [a] -> (a -> Bool) -> IO ()
-testMagmaGeneric name elems isGeneratorFunc = do
+testMagmaGeneric :: (MagmaElement a) => String -> [a] -> IO ()
+testMagmaGeneric name elems = do
     putStrLn $ "\nTesting " ++ name ++ ":"
     putStrLn "Testing which elements are generators:"
     mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorFunc m then "" else "not ") ++ "a generator by itself") elems
+           (if isGeneratorByItself m then "" else "not ") ++ "a generator by itself") elems
     
     putStrLn "\nTesting which elements satisfy middle associativity:"
     mapM_ (\m -> putStrLn $ show m ++
