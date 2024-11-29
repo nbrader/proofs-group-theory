@@ -103,12 +103,13 @@ foldMagma :: MagmaElement a => a -> [a] -> a
 foldMagma = foldl op
 
 -- Check if fold-left-combine middle associativity holds
-isFoldLeftCombineMiddleAssocM1 = and [
+isFoldLeftCombineMiddleAssoc :: forall a. MagmaElement a => [a] -> Bool
+isFoldLeftCombineMiddleAssoc elems = and [
     (combined1 == combined2) |
-    x <- carrier :: [M1],
-    y <- carrier,
-    xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
-    ys <- concat [sequence (replicate i carrier) | i <- [0..2]],
+    x <- elems,
+    y <- elems,
+    xs <- concat [sequence (replicate i elems) | i <- [0..2]],
+    ys <- concat [sequence (replicate i elems) | i <- [0..2]],
     let result1 = foldMagma x xs,
     let result2 = foldMagma y ys,
     let combined1 = op result1 result2,
@@ -116,47 +117,18 @@ isFoldLeftCombineMiddleAssocM1 = and [
     combined1 /= combined2
     ]
 
--- Check if fold-left-combine middle associativity holds
-isFoldLeftCombineMiddleAssocM2 = and [
-    (combined1 == combined2) |
-    x <- carrier :: [M2],
-    y <- carrier,
-    xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
-    ys <- concat [sequence (replicate i carrier) | i <- [0..2]],
-    let result1 = foldMagma x xs,
-    let result2 = foldMagma y ys,
-    let combined1 = op result1 result2,
-    let combined2 = foldMagma x (xs ++ [y] ++ ys),
-    combined1 /= combined2
-    ]
+-- Replace specific functions with instances of the generic function
+isFoldLeftCombineMiddleAssocM1 :: Bool
+isFoldLeftCombineMiddleAssocM1 = isFoldLeftCombineMiddleAssoc (carrier :: [M1])
 
--- Check if fold-left-combine middle associativity holds
-isFoldLeftCombineMiddleAssocM3 = and [
-    (combined1 == combined2) |
-    x <- carrier :: [M3],
-    y <- carrier,
-    xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
-    ys <- concat [sequence (replicate i carrier) | i <- [0..2]],
-    let result1 = foldMagma x xs,
-    let result2 = foldMagma y ys,
-    let combined1 = op result1 result2,
-    let combined2 = foldMagma x (xs ++ [y] ++ ys),
-    combined1 /= combined2
-    ]
+isFoldLeftCombineMiddleAssocM2 :: Bool
+isFoldLeftCombineMiddleAssocM2 = isFoldLeftCombineMiddleAssoc (carrier :: [M2])
 
--- Check if fold-left-combine middle associativity holds
-isFoldLeftCombineMiddleAssocM4 = and [
-    (combined1 == combined2) |
-    x <- carrier :: [M4],
-    y <- carrier,
-    xs <- concat [sequence (replicate i carrier) | i <- [0..2]],
-    ys <- concat [sequence (replicate i carrier) | i <- [0..2]],
-    let result1 = foldMagma x xs,
-    let result2 = foldMagma y ys,
-    let combined1 = op result1 result2,
-    let combined2 = foldMagma x (xs ++ [y] ++ ys),
-    combined1 /= combined2
-    ]
+isFoldLeftCombineMiddleAssocM3 :: Bool
+isFoldLeftCombineMiddleAssocM3 = isFoldLeftCombineMiddleAssoc (carrier :: [M3])
+
+isFoldLeftCombineMiddleAssocM4 :: Bool
+isFoldLeftCombineMiddleAssocM4 = isFoldLeftCombineMiddleAssoc (carrier :: [M4])
 
 -- Check if an element is a generator
 --
