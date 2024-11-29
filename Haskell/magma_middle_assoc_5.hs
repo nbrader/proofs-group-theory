@@ -12,7 +12,7 @@ data M3 = W | X | Y | Z deriving (Eq, Show, Enum, Bounded)
 
 -- I'm making this carrier type finite for testing purposes but it's a place-holder for
 -- an infinite type (otherwise M4 would not be closed as is required to be a magma.
-data C4 = I | J | K | L deriving (Eq, Show, Enum, Bounded) 
+data C4 = I | J | K deriving (Eq, Show, Enum, Bounded) 
 newtype M4 = M4 [C4] deriving (Eq, Show)
 
 -- Define a data type for the different Magma options
@@ -105,7 +105,7 @@ instance MagmaElement M3 where
     op = magmaOp3
 
 instance MagmaElement M4 where
-    carrier = map (M4 . (:[])) [J .. L]
+    carrier = map M4 $ [] : map (:[]) [J .. K]
     op = magmaOp4
 
 -- Check if middle associativity holds for a specific middle element
