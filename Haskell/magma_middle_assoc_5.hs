@@ -9,7 +9,7 @@ import Control.Monad
 data M1 = A | B | C | D deriving (Eq, Show, Enum, Bounded)
 data M2 = P | Q | R | S deriving (Eq, Show, Enum, Bounded)
 data M3 = W | X | Y | Z deriving (Eq, Show, Enum, Bounded)
-newtype M4 = M4 {fromM4 :: [M3]} deriving (Eq, Show)
+newtype M4 = M4 [M3] deriving (Eq, Show)
 
 -- Define a data type for the different Magma options
 data MagmaType = FirstMagma | SecondMagma | ThirdMagma | FreeMonoid
@@ -191,6 +191,39 @@ instance Arbitrary M2 where arbitrary = elements carrier
 instance Arbitrary M3 where arbitrary = elements carrier
 instance Arbitrary M4 where arbitrary = elements carrier
 
+-- Function to generate a grid for a magma operation
+printMagmaGrid :: (Show a, MagmaElement a) => String -> [a] -> IO ()
+printMagmaGrid name elems = do
+    putStrLn $ "\n" ++ name ++ " Operation Table:"
+    let elemCombinations = elems ++ [row `op` col | row <- elems, col <- elems]
+        maxElemLength = maximum (map (length . show) elemCombinations)
+        padding = ((maxElemLength `div` 4) + 1) * 4 -- Adjust padding to be a multiple of 4
+        padElement = padRight padding
+    -- Print the header
+    putStr $ replicate padding ' '
+    mapM_ (putStr . padElement . show) elems
+    putStrLn ""
+    -- Print each row
+    forM_ elems $ \row -> do
+        putStr (padElement (show row))
+        mapM_ (\col -> putStr (padElement (show $ op row col))) elems
+        putStrLn ""
+
+-- Utility function to pad a string to a fixed width
+padRight :: Int -> String -> String
+padRight n s = s ++ replicate (n - length s) ' '
+
+-- Print grids for each magma type
+printAllMagmaGrids :: MagmaType -> IO ()
+printAllMagmaGrids magmaType = case magmaType of
+    FirstMagma  -> printMagmaGrid (prettyMagmaName FirstMagma) (carrier :: [M1])
+    SecondMagma -> printMagmaGrid (prettyMagmaName SecondMagma) (carrier :: [M2])
+    ThirdMagma  -> printMagmaGrid (prettyMagmaName ThirdMagma) (carrier :: [M3])
+    FreeMonoid  -> printMagmaGrid (prettyMagmaName FreeMonoid) (carrier :: [M4])
+
+
 -- Main function to iterate over all magma types
 main :: IO ()
-main = mapM_ testMagma [minBound .. maxBound :: MagmaType]
+main = do
+    mapM_ printAllMagmaGrids [minBound .. maxBound :: MagmaType]
+    mapM_ testMagma [minBound .. maxBound :: MagmaType]
