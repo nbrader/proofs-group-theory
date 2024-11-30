@@ -151,7 +151,7 @@ isFoldLeftCombineMiddleAssocM4 = isFoldLeftCombineMiddleAssoc (carrier :: [M4])
 
 -- Generic generator function works for all magma types
 isGeneratorByItself :: (MagmaElement a) => a -> Bool
-isGeneratorByItself m = length (generateElements m) == length (specificCarrier m)
+isGeneratorByItself g = all (`elem` generateElements g) (specificCarrier g)
   where
     specificCarrier :: MagmaElement a => a -> [a]
     specificCarrier _ = carrier
@@ -161,7 +161,7 @@ isGeneratorByItself m = length (generateElements m) == length (specificCarrier m
 
 -- Generic generator function works for all magma types
 isGeneratingSet :: (MagmaElement a) => [a] -> Bool
-isGeneratingSet gs@(g:_) = length (generateElements gs) == length (specificCarrier g)
+isGeneratingSet gs@(g:_) = all (`elem` generateElements gs) (specificCarrier g)
   where
     specificCarrier :: MagmaElement a => a -> [a]
     specificCarrier _ = carrier
