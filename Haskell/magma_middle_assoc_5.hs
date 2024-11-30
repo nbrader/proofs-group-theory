@@ -2,7 +2,7 @@
 -- stack --resolver lts-20.5 ghci --package QuickCheck
 
 import Test.QuickCheck
-import Data.List (nub)
+import Data.List (nub, null)
 import Control.Monad
 
 -- Define data types for both magmas
@@ -159,6 +159,21 @@ isGeneratorByItself m = length (generateElements m) == length (specificCarrier m
     generateElements x = nub $ concat $ take (length (specificCarrier x)) $ iterate genStep [x]
     genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
 
+-- Generic generator function works for all magma types
+isGeneratingSet :: (MagmaElement a) => [a] -> Bool
+isGeneratingSet gs@(g:_) = length (generateElements gs) == length (specificCarrier g)
+  where
+    specificCarrier :: MagmaElement a => a -> [a]
+    specificCarrier _ = carrier
+
+    generateElements gs = nub $ concat $ take (length (specificCarrier g)) $ iterate genStep gs
+    genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
+
+subsets :: [a] -> [[a]]
+subsets [] = [[]]
+subsets (x:xs) = map (x:) subs ++ subs
+  where subs = subsets xs
+
 -- Generalized testing function
 testMagmaGeneric :: (MagmaElement a) => String -> [a] -> IO ()
 testMagmaGeneric name elems = do
@@ -166,6 +181,11 @@ testMagmaGeneric name elems = do
     putStrLn "Testing which elements are generators by themselves:"
     mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
            (if isGeneratorByItself m then "" else "not ") ++ "a generator by itself") elems
+    
+    putStrLn $ "\nTesting " ++ name ++ ":"
+    putStrLn "Testing which subsets are generating sets:"
+    mapM_ (\subset -> putStrLn $ show subset ++ " is " ++ 
+           (if isGeneratingSet subset then "" else "not ") ++ "a generating set") (filter (not . null) $ subsets elems)
     
     putStrLn "\nTesting which elements satisfy middle associativity:"
     mapM_ (\m -> putStrLn $ show m ++
