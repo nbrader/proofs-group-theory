@@ -183,9 +183,8 @@ testMagmaGeneric name elems = do
            (if isGeneratorByItself m then "" else "not ") ++ "a generator by itself") elems
     
     putStrLn $ "\nTesting " ++ name ++ ":"
-    putStrLn "Testing which subsets are generating sets:"
-    mapM_ (\subset -> putStrLn $ show subset ++ " is " ++ 
-           (if isGeneratingSet subset then "" else "not ") ++ "a generating set") (filter (not . null) $ subsets elems)
+    putStrLn "The following subsets of the carrier are generating sets:"
+    mapM_ print . filter isGeneratingSet . filter (not . null) $ subsets elems
     
     putStrLn "\nTesting which elements satisfy middle associativity:"
     mapM_ (\m -> putStrLn $ show m ++
