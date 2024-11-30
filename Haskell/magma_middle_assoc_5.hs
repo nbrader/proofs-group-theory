@@ -157,10 +157,48 @@ subsets [] = [[]]
 subsets (x:xs) = map (x:) subs ++ subs
   where subs = subsets xs
 
--- Generalized testing function
-testMagmaGeneric :: (MagmaElement a) => String -> [a] -> IO ()
+-- Brute-force test of associativity for a given magma
+isAssociative :: (MagmaElement a, Eq a) => a -> Bool
+isAssociative g = and [
+    op (op a b) c == op a (op b c) |
+    a <- specificCarrier g,
+    b <- specificCarrier g,
+    c <- specificCarrier g
+  ]
+  where
+    specificCarrier :: (MagmaElement a, Eq a) => a -> [a]
+    specificCarrier _ = carrier
+
+-- Function to test and report associativity
+testAssociativity :: (MagmaElement a, Eq a) => String -> [a] -> IO ()
+testAssociativity name elems = do
+    putStrLn $ "\nTesting Associativity for " ++ name ++ ":"
+    let associative = isAssociative (head elems)
+    putStrLn $ "Associative: " ++ show associative
+    
+    when (not associative) $ do
+        putStrLn "Finding non-associative triples:"
+        let nonAssocTriples = [
+                (a, b, c) |
+                a <- elems,
+                b <- elems,
+                c <- elems,
+                op (op a b) c /= op a (op b c)
+              ]
+        mapM_ (\(a, b, c) -> putStrLn $ 
+            "(" ++ show a ++ " * " ++ show b ++ ") * " ++ 
+            show c ++ " = " ++ show (op (op a b) c) ++ 
+            " but " ++ 
+            show a ++ " * (" ++ show b ++ " * " ++ show c ++ ") = " ++ 
+            show (op a (op b c))) 
+            (take 5 nonAssocTriples)
+
+-- Update the generic testing function to include associativity test
+testMagmaGeneric :: (MagmaElement a, Eq a) => String -> [a] -> IO ()
 testMagmaGeneric name elems = do
     putStrLn $ "\nTesting " ++ name ++ ":"
+    
+    -- Existing tests
     putStrLn "The following subsets of the carrier are generating sets:"
     mapM_ print . filter isGeneratingSet . filter (not . null) $ subsets elems
     
@@ -176,7 +214,9 @@ testMagmaGeneric name elems = do
         "Third Magma" -> isFoldLeftCombineMiddleAssocM3
         "Free Monoid" -> isFoldLeftCombineMiddleAssocM4
         _ -> False) ++ "fold-left-combine middle associativity"
-
+    
+    -- New associativity test
+    testAssociativity name elems
 
 -- Function to test a specific MagmaType
 testMagma :: MagmaType -> IO ()
