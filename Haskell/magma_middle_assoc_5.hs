@@ -16,7 +16,7 @@ data C4 = I | J | K deriving (Eq, Show, Enum, Bounded)
 newtype M4 = M4 [C4] deriving (Eq, Show)
 
 -- Define a data type for the different Magma options
-data MagmaType = FirstMagma | SecondMagma | ThirdMagma | FreeMonoid
+data MagmaType = FirstMagma | SecondMagma | ThirdMagma {- | FreeMonoid -} | CustomMagma
     deriving (Eq, Show, Enum, Bounded)
 
 -- Pretty names for each MagmaType
@@ -24,7 +24,8 @@ prettyMagmaName :: MagmaType -> String
 prettyMagmaName FirstMagma  = "First Magma (Non-associative)"
 prettyMagmaName SecondMagma = "Second Magma (Klein four-group)"
 prettyMagmaName ThirdMagma  = "Third Magma"
-prettyMagmaName FreeMonoid  = "Append Magma"
+-- prettyMagmaName FreeMonoid  = "Append Magma"
+prettyMagmaName CustomMagma  = "Custom Magma"
 
 -- First magma operation (non-associative)
 magmaOp1 :: M1 -> M1 -> M1
@@ -87,26 +88,54 @@ magmaOp3 Z Z = Y
 magmaOp4 :: M4 -> M4 -> M4
 magmaOp4 (M4 x) (M4 y) = M4 (x ++ y)
 
+data M5 = P5 | Q5 | R5 | S5 deriving (Eq, Show, Enum, Bounded)
+
+-- Custom magma operation
+magmaOp5 :: M5 -> M5 -> M5
+magmaOp5 P5 P5 = P5
+magmaOp5 P5 Q5 = Q5
+magmaOp5 P5 R5 = S5
+magmaOp5 P5 S5 = S5
+
+magmaOp5 Q5 P5 = P5
+magmaOp5 Q5 Q5 = Q5
+magmaOp5 Q5 R5 = S5
+magmaOp5 Q5 S5 = S5
+
+magmaOp5 R5 P5 = P5
+magmaOp5 R5 Q5 = Q5
+magmaOp5 R5 R5 = S5
+magmaOp5 R5 S5 = S5
+
+magmaOp5 S5 P5 = P5
+magmaOp5 S5 Q5 = Q5
+magmaOp5 S5 R5 = R5
+magmaOp5 S5 S5 = S5
+
 -- Generic functions that work with either magma
 class (Eq a, Show a) => MagmaElement a where
     carrier :: [a]
     op :: a -> a -> a
 
 instance MagmaElement M1 where
-    carrier = [A .. D]
+    carrier = [minBound .. maxBound]
     op = magmaOp1
 
 instance MagmaElement M2 where
-    carrier = [P .. S]
+    carrier = [minBound .. maxBound]
     op = magmaOp2
 
 instance MagmaElement M3 where
-    carrier = [W .. Z]
+    carrier = [minBound .. maxBound]
     op = magmaOp3
 
 instance MagmaElement M4 where
-    carrier = map M4 $ [] : map (:[]) [I .. K]
+    carrier = map M4 $ [] : map (:[]) [minBound .. maxBound]
     op = magmaOp4
+
+instance MagmaElement M5 where
+    carrier = [minBound .. maxBound]
+    op = magmaOp5
 
 -- Check if middle associativity holds for a specific middle element
 isMiddleAssoc :: MagmaElement a => a -> Bool
@@ -224,13 +253,15 @@ testMagma magmaType = case magmaType of
     FirstMagma  -> testMagmaGeneric (prettyMagmaName FirstMagma) (carrier :: [M1])
     SecondMagma -> testMagmaGeneric (prettyMagmaName SecondMagma) (carrier :: [M2])
     ThirdMagma  -> testMagmaGeneric (prettyMagmaName ThirdMagma) (carrier :: [M3])
-    FreeMonoid  -> testMagmaGeneric (prettyMagmaName FreeMonoid) (carrier :: [M4])
+    -- FreeMonoid  -> testMagmaGeneric (prettyMagmaName FreeMonoid) (carrier :: [M4])
+    CustomMagma -> testMagmaGeneric (prettyMagmaName CustomMagma) (carrier :: [M5])
 
 -- Arbitrary instances
 instance Arbitrary M1 where arbitrary = elements carrier
 instance Arbitrary M2 where arbitrary = elements carrier
 instance Arbitrary M3 where arbitrary = elements carrier
 instance Arbitrary M4 where arbitrary = elements carrier
+instance Arbitrary M5 where arbitrary = elements carrier
 
 -- Function to generate a grid for a magma operation
 printMagmaGrid :: (Show a, MagmaElement a) => String -> [a] -> IO ()
@@ -260,7 +291,8 @@ printAllMagmaGrids magmaType = case magmaType of
     FirstMagma  -> printMagmaGrid (prettyMagmaName FirstMagma) (carrier :: [M1])
     SecondMagma -> printMagmaGrid (prettyMagmaName SecondMagma) (carrier :: [M2])
     ThirdMagma  -> printMagmaGrid (prettyMagmaName ThirdMagma) (carrier :: [M3])
-    FreeMonoid  -> printMagmaGrid (prettyMagmaName FreeMonoid) (carrier :: [M4])
+    -- FreeMonoid  -> printMagmaGrid (prettyMagmaName FreeMonoid) (carrier :: [M4])
+    CustomMagma -> printMagmaGrid (prettyMagmaName CustomMagma) (carrier :: [M5])
 
 
 -- Main function to iterate over all magma types
