@@ -85,7 +85,7 @@ magmaOp3 Z Z = Y
 
 -- Third magma operation (associative - Klein four-group)
 magmaOp4 :: M4 -> M4 -> M4
-magmaOp4 (M4 x) (M4 y) = M4 (x ++ y) 
+magmaOp4 (M4 x) (M4 y) = M4 (x ++ y)
 
 -- Generic functions that work with either magma
 class (Eq a, Show a) => MagmaElement a where
@@ -142,23 +142,6 @@ isFoldLeftCombineMiddleAssocM2 = isFoldLeftCombineMiddleAssoc (carrier :: [M2])
 isFoldLeftCombineMiddleAssocM3 = isFoldLeftCombineMiddleAssoc (carrier :: [M3])
 isFoldLeftCombineMiddleAssocM4 = isFoldLeftCombineMiddleAssoc (carrier :: [M4])
 
--- Check if an element is a generator
---
--- NOTE:
--- 	I previosuly wasn't considering the possible generating sets but instead only declaring an element
---	as a generator when it was a generator in a generating set by itself.
---
-
--- Generic generator function works for all magma types
-isGeneratorByItself :: (MagmaElement a) => a -> Bool
-isGeneratorByItself g = all (`elem` generateElements g) (specificCarrier g)
-  where
-    specificCarrier :: MagmaElement a => a -> [a]
-    specificCarrier _ = carrier
-
-    generateElements x = nub $ concat $ take (length (specificCarrier x)) $ iterate genStep [x]
-    genStep elems = nub $ elems ++ [op a b | a <- elems, b <- elems]
-
 -- Generic generator function works for all magma types
 isGeneratingSet :: (MagmaElement a) => [a] -> Bool
 isGeneratingSet gs@(g:_) = all (`elem` generateElements gs) (specificCarrier g)
@@ -177,11 +160,6 @@ subsets (x:xs) = map (x:) subs ++ subs
 -- Generalized testing function
 testMagmaGeneric :: (MagmaElement a) => String -> [a] -> IO ()
 testMagmaGeneric name elems = do
-    putStrLn $ "\nTesting " ++ name ++ ":"
-    putStrLn "Testing which elements are generators by themselves:"
-    mapM_ (\m -> putStrLn $ show m ++ " is " ++ 
-           (if isGeneratorByItself m then "" else "not ") ++ "a generator by itself") elems
-    
     putStrLn $ "\nTesting " ++ name ++ ":"
     putStrLn "The following subsets of the carrier are generating sets:"
     mapM_ print . filter isGeneratingSet . filter (not . null) $ subsets elems
